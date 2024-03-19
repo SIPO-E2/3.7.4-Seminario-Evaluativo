@@ -5,15 +5,14 @@ import { User } from "../models/user";
 import { Client } from "../models/client";
 import { JobPosition } from "../models/jobPosition"; // Importing JobPosition model
 
-// In here we get all the projects and also we can include the job positions
+// So we can get ALL the projects
 export const getProjects = async (req: Request, res: Response) => {
-  const { from = 0, to = 5, includeJobPositions = "false" } = req.query;
+  const { includeJobPositions = "false" } = req.query;
+  const options = {
+    include: includeJobPositions === "true" ? [JobPosition] : [],
+  };
   try {
-    const projects = await Project.findAll({
-      offset: Number(from),
-      limit: Number(to),
-      include: includeJobPositions === "true" ? [JobPosition] : [],
-    });
+    const projects = await Project.findAll(options);
     res.json({ status: "success", message: "Projects found", data: projects });
   } catch (e) {
     res.status(500).json({
