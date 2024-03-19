@@ -82,20 +82,23 @@ export const postProject = async (req: Request, res: Response) => {
   }
 };
 
-// Actualiza un proyecto existente
+// Updating a project
 export const putProject = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const projectUpdates = req.body;
+
   try {
-    const [updated] = await Project.update(req.body, { where: { id } });
+    const [updated] = await Project.update(projectUpdates, { where: { id } });
     if (updated) {
       const updatedProject = await Project.findByPk(id);
-      return res.json({
+      res.json({
         status: "success",
-        message: "Project updated",
+        message: "Project updated successfully",
         data: updatedProject,
       });
+    } else {
+      res.status(404).json({ status: "error", message: "Project not found" });
     }
-    res.status(404).json({ status: "error", message: "Project not found" });
   } catch (error) {
     res
       .status(500)
