@@ -125,6 +125,6 @@ export class JobPosition extends Model<
   deletedAt?: Date;
 
   // Para el manejo de borrado suave
-  @Column({ type: DataType.BOOLEAN, allowNull: true })
-  activeDB?: boolean;
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  activeDB!: boolean;
 }

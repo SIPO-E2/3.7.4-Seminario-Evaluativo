@@ -46,6 +46,7 @@ export const createJobPosition = async (req: Request, res: Response) => {
       client_id,
       exclusivity,
       demand_curation: demandCuration,
+      activeDB: true, // When creating a new job position, it's active by default
     });
 
     res.json({
