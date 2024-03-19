@@ -5,7 +5,7 @@ import { User } from "../models/user";
 import { Client } from "../models/client";
 import { JobPosition } from "../models/jobPosition"; // Importing JobPosition model
 
-// Obtiene todos los proyectos, con opción de incluir posiciones laborales
+// In here we get all the projects and also we can include the job positions
 export const getProjects = async (req: Request, res: Response) => {
   const { from = 0, to = 5, includeJobPositions = "false" } = req.query;
   try {
@@ -15,14 +15,16 @@ export const getProjects = async (req: Request, res: Response) => {
       include: includeJobPositions === "true" ? [JobPosition] : [],
     });
     res.json({ status: "success", message: "Projects found", data: projects });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ status: "error", message: "Error fetching projects", error });
+  } catch (e) {
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching projects",
+      error: e,
+    });
   }
 };
 
-// Obtiene un proyecto específico por ID
+// In here we get a project by id and also we can include the job positions related to the project
 export const getProject = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
@@ -35,10 +37,12 @@ export const getProject = async (req: Request, res: Response) => {
         .json({ status: "error", message: "Project not found" });
     }
     res.json({ status: "success", message: "Project found", data: project });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ status: "error", message: "Error fetching the project", error });
+  } catch (e) {
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching the project",
+      error: e,
+    });
   }
 };
 
