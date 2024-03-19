@@ -65,14 +65,19 @@ export const createJobPosition = async (req: Request, res: Response) => {
   }
 };
 
-// Get all job positions
 export const getAllJobPositions = async (req: Request, res: Response) => {
-  // Corrección: Uso de 'limit' y 'offset' para la paginación, con valores predeterminados más claros
-  const limit = parseInt(req.query.limit as string) || 5;
-  const offset = parseInt(req.query.offset as string) || 0;
+  const limit = req.query.limit
+    ? parseInt(req.query.limit as string)
+    : undefined; // Si no se proporciona 'limit', será 'undefined'
+  const offset = req.query.offset
+    ? parseInt(req.query.offset as string)
+    : undefined; // Si no se proporciona 'offset', será 'undefined'
 
   try {
-    const jobPositions = await JobPosition.findAll({ offset, limit });
+    const jobPositions = await JobPosition.findAll({
+      ...(limit && { limit }), // Incluye 'limit' solo si se especifica
+      ...(offset && { offset }), // Incluye 'offset' solo si se especifica
+    });
     res.json({
       status: "success",
       message: "All job positions found",
@@ -86,6 +91,7 @@ export const getAllJobPositions = async (req: Request, res: Response) => {
     });
   }
 };
+
 // Get job position by id
 export const getJobPositionById = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
