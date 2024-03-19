@@ -7,13 +7,12 @@ import {
 } from "../models/jobPosition";
 import { Client } from "../models/client"; // Asegúrate de tener un modelo para Client
 
-// Función para determinar DemandCuration basado en las reglas proporcionadas
-const determineDemandCuration = async (
+// Función auxiliar para determinar el valor de 'demand_curation'
+async function determineDemandCuration(
   clientId: string,
   exclusivity: Exclusivity
-): Promise<DemandCuration> => {
+): Promise<DemandCuration> {
   const client = await Client.findByPk(clientId);
-
   if (!client) {
     throw new Error("Client not found");
   }
@@ -26,16 +25,13 @@ const determineDemandCuration = async (
     return DemandCuration.Open;
   }
 
-  // Valor por defecto o manejo de casos no contemplados
-  return DemandCuration.Open;
-};
+  return DemandCuration.Open; // Valor por defecto
+}
 
-// Ejemplo de uso en una ruta de Express para crear un JobPosition
+// Crear una nueva Job Position
 export const createJobPosition = async (req: Request, res: Response) => {
   try {
-    // Asume que el body ya contiene todos los atributos necesarios excepto demand_curation
     const { client_id, exclusivity, ...restOfAttributes } = req.body;
-
     const demandCuration = await determineDemandCuration(
       client_id,
       exclusivity
@@ -46,7 +42,7 @@ export const createJobPosition = async (req: Request, res: Response) => {
       client_id,
       exclusivity,
       demand_curation: demandCuration,
-      activeDB: true, // When creating a new job position, it's active by default
+      activeDB: true, // Asegura que 'activeDB' sea verdadero por defecto
     });
 
     res.json({
@@ -55,13 +51,9 @@ export const createJobPosition = async (req: Request, res: Response) => {
       data: jobPosition,
     });
   } catch (error) {
-    let errorMessage = "Unknown error";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
     res.status(500).json({
       status: "error",
-      message: errorMessage,
+      message: error || "Error creating job position",
     });
   }
 };
@@ -125,35 +117,22 @@ export const getJobPositionById = async (req: Request, res: Response) => {
   }
 };
 
-// Update a job position
+// Actualizar una Job Position existente
 export const updateJobPosition = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  if (!id) {
-    return res.status(400).json({
-      status: "error",
-      message: "Invalid job position ID",
-    });
-  }
+  const { id } = req.params;
 
   try {
-    // Aquí se puede incluir lógica para verificar si `exclusivity` o alguna otra propiedad relevante ha cambiado
-    // y, por lo tanto, se necesita recalcula `demand_curation`.
-    const existingJobPosition = await JobPosition.findByPk(id);
-    if (!existingJobPosition) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Job position not found" });
-    }
-
-    const { exclusivity, client_id } = req.body;
-
-    let demandCuration;
-    if (exclusivity && client_id) {
-      demandCuration = await determineDemandCuration(client_id, exclusivity);
-    }
+    const { client_id, exclusivity } = req.body;
+    const demandCuration =
+      client_id && exclusivity
+        ? await determineDemandCuration(client_id, exclusivity)
+        : undefined; // No recalcula 'demand_curation' si no se proveen ambos campos
 
     await JobPosition.update(
-      { ...req.body, demand_curation: demandCuration },
+      {
+        ...req.body,
+        ...(demandCuration && { demand_curation: demandCuration }),
+      },
       { where: { id } }
     );
 
@@ -163,12 +142,10 @@ export const updateJobPosition = async (req: Request, res: Response) => {
       message: "Job position updated",
       data: updatedJobPosition,
     });
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
     res.status(500).json({
       status: "error",
-      message: "Error updating job position",
-      error: e,
+      message: error || "Error updating job position",
     });
   }
 };
