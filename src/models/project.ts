@@ -1,9 +1,10 @@
+// models/project.ts
+
 import {
   Table,
   Column,
   Model,
   DataType,
-  AllowNull,
   CreatedAt,
   UpdatedAt,
   DeletedAt,
@@ -11,15 +12,13 @@ import {
   BelongsTo,
   HasMany,
 } from "sequelize-typescript";
-import { Optional } from "sequelize";
 import { Client } from "./client";
 import { User } from "./user";
 import { JobPosition } from "./jobPosition";
+import { Optional } from "sequelize";
 
 interface ProjectAttributes {
   id: number;
-  user_id: number;
-  client_id: number;
   name: string;
   status: number;
   revenue: number;
@@ -27,9 +26,8 @@ interface ProjectAttributes {
   posting_date: Date;
   exp_closure_date: Date;
   image: string;
-  owner: User;
-  client: Client;
-  job_positions: JobPosition[];
+  user_id: number;
+  client_id: number;
   activeDB?: boolean;
 }
 
@@ -45,62 +43,59 @@ export class Project extends Model<
   ProjectAttributes,
   ProjectCreationAttributes
 > {
+  @Column({ type: DataType.INTEGER, autoIncrement: true, primaryKey: true })
+  id!: number;
+
   @Column(DataType.STRING)
-  public name!: string;
+  name!: string;
 
   @Column(DataType.INTEGER)
-  public status!: number;
+  status!: number;
 
   @Column(DataType.FLOAT)
-  public revenue!: number;
+  revenue!: number;
 
   @Column(DataType.STRING)
-  public region!: string;
+  region!: string;
 
   @Column(DataType.DATE)
-  public posting_date!: Date;
+  posting_date!: Date;
 
   @Column(DataType.DATE)
-  public exp_closure_date!: Date;
+  exp_closure_date!: Date;
 
   @Column(DataType.STRING)
-  public image!: string;
+  image!: string;
 
   @CreatedAt
   @Column
-  public createdAt!: Date;
+  createdAt!: Date;
 
   @UpdatedAt
   @Column
-  public updatedAt!: Date;
+  updatedAt!: Date;
 
   @DeletedAt
   @Column
-  public deletedAt!: Date;
+  deletedAt!: Date;
 
-  // Default true
   @Column({ type: DataType.BOOLEAN, defaultValue: true })
-  public activeDB?: boolean;
+  activeDB?: boolean;
 
-  // Foreign key user
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
-  public user_id!: number;
+  @Column({ type: DataType.INTEGER })
+  user_id!: number;
 
-  //Has one User
   @BelongsTo(() => User)
-  public owner!: User;
+  owner!: User;
 
-  // Foreign key client
   @ForeignKey(() => Client)
-  @Column(DataType.INTEGER)
-  public client_id!: number;
+  @Column({ type: DataType.INTEGER })
+  client_id!: number;
 
-  //Has one Client
   @BelongsTo(() => Client)
-  public client!: Client;
+  client!: Client;
 
-  // Here we define the relationship between the project and the job positions
   @HasMany(() => JobPosition)
-  public job_positions!: JobPosition[];
+  jobPositions!: JobPosition[];
 }

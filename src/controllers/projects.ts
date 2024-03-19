@@ -3,56 +3,47 @@ import { Project } from "../models/project";
 import { ProjectCreationAttributes } from "../models/project";
 import { User } from "../models/user";
 import { Client } from "../models/client";
+import { JobPosition } from "../models/jobPosition"; // Importing JobPosition model
 
-//Getting projects
-
+// Obtiene todos los proyectos, con opción de incluir posiciones laborales
 export const getProjects = async (req: Request, res: Response) => {
-  const { from = 0, to = 5 } = req.query;
-
-  // DB
-  await Project.findAll({ offset: Number(from), limit: Number(to) })
-    .then((projects) => {
-      res.json({
-        status: "success",
-        message: "Projects found",
-        data: projects,
-      });
-    })
-    .catch((e) => {
-      res.json({
-        status: "error",
-        message: "Projects not found",
-        data: e,
-      });
+  const { from = 0, to = 5, includeJobPositions = "false" } = req.query;
+  try {
+    const projects = await Project.findAll({
+      offset: Number(from),
+      limit: Number(to),
+      include: includeJobPositions === "true" ? [JobPosition] : [],
     });
+    res.json({ status: "success", message: "Projects found", data: projects });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Error fetching projects", error });
+  }
 };
 
-//Getting a project
-
+// Obtiene un proyecto específico por ID
 export const getProject = async (req: Request, res: Response) => {
   const { id } = req.params;
-
-  //DB
-  await Project.findByPk(id)
-    .then((project) => {
-      res.json({
-        status: "success",
-        message: "Project found",
-        data: project,
-      });
-    })
-    .catch((e) => {
-      res.json({
-        status: "error",
-        message: "Project not found",
-        data: e,
-      });
+  try {
+    const project = await Project.findByPk(id, {
+      include: [JobPosition],
     });
+    if (!project) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Project not found" });
+    }
+    res.json({ status: "success", message: "Project found", data: project });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Error fetching the project", error });
+  }
 };
 
-//Creating a project
-
-export const postProject = async (req: Request, res: Response) => {
+// Crea un nuevo proyecto
+export const createProject = async (req: Request, res: Response) => {
   const {
     name,
     status,
@@ -63,92 +54,67 @@ export const postProject = async (req: Request, res: Response) => {
     posting_date,
     exp_closure_date,
     image,
-  }: ProjectCreationAttributes = req.body;
-
-  const owner = await User.findByPk(user_id);
-  const client = await Client.findByPk(client_id);
-
-  // if user or client not found return error because the relationship is required
-  if (!client || !owner) {
+  } = req.body;
+  try {
+    const newProject = await Project.create({
+      name,
+      status,
+      revenue,
+      user_id,
+      client_id,
+      region,
+      posting_date,
+      exp_closure_date,
+      image,
+    });
     res.json({
-      status: "error",
-      message: "User or Client of Project not found",
-      data: null,
+      status: "success",
+      message: "Project created",
+      data: newProject,
     });
-    return;
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Error creating project", error });
   }
-
-  await Project.create({
-    name,
-    status,
-    revenue,
-    user_id,
-    owner,
-    client_id,
-    client,
-    region,
-    posting_date,
-    exp_closure_date,
-    image,
-  })
-    .then((project) => {
-      res.json({
-        status: "success",
-        message: "Project created",
-        data: project,
-      });
-    })
-    .catch((e) => {
-      res.json({
-        status: "suerrorccess",
-        message: "Project not created",
-        data: e,
-      });
-    });
 };
 
-//Updating a project
-export const putProject = async (req: Request, res: Response) => {
+// Actualiza un proyecto existente
+export const updateProject = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { ...resto } = req.body;
-
-  await Project.update(resto, { where: { id } })
-    .then(async () => {
+  try {
+    const [updated] = await Project.update(req.body, { where: { id } });
+    if (updated) {
       const updatedProject = await Project.findByPk(id);
-      res.json({
+      return res.json({
         status: "success",
         message: "Project updated",
         data: updatedProject,
       });
-    })
-    .catch((e) => {
-      res.json({
-        status: "error",
-        message: "Project not updated",
-        data: e,
-      });
-    });
+    }
+    res.status(404).json({ status: "error", message: "Project not found" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Error updating project", error });
+  }
 };
 
-//Deleting a user (soft delete)
+// Elimina (borrado suave) un proyecto
 export const deleteProject = async (req: Request, res: Response) => {
   const { id } = req.params;
-
-  await Project.update({ activeDB: false }, { where: { id } })
-    .then(() => {
-      res.json({
-        status: "success",
-        message: "Project deleted",
-        data: {
-          id,
-        },
-      });
-    })
-    .catch((e) => {
-      res.json({
-        status: "success",
-        message: "Project not deleted",
-        data: e,
-      });
-    });
+  try {
+    const deleted = await Project.update(
+      { activeDB: false },
+      { where: { id } }
+    );
+    if (deleted) {
+      return res.json({ status: "success", message: "Project deleted" });
+    }
+    res.status(404).json({ status: "error", message: "Project not found" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Error deleting project", error });
+  }
 };

@@ -39,7 +39,6 @@ interface JobPositionAttributes {
   exclusivity: Exclusivity;
   demand_curation: DemandCuration;
   cross_division: boolean;
-  // openings_list: Opening[];
   project_id: number; // Correction
   project: Project; // Correction
   image_url: string;
@@ -98,6 +97,9 @@ export class JobPosition extends Model<
   @Column({ type: DataType.STRING, allowNull: true })
   image_url?: string;
 
+  // We only include the opening list in the JobPosition colum table
+  // we should not include it in the interface because
+  // its already define in the Opening model
   // @HasMany(() => Opening)
   // openings_list!: Opening[];
 
