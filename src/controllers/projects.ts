@@ -47,7 +47,7 @@ export const getProject = async (req: Request, res: Response) => {
 };
 
 // Crea un nuevo proyecto
-export const createProject = async (req: Request, res: Response) => {
+export const postProject = async (req: Request, res: Response) => {
   const {
     name,
     status,
@@ -84,7 +84,7 @@ export const createProject = async (req: Request, res: Response) => {
 };
 
 // Actualiza un proyecto existente
-export const updateProject = async (req: Request, res: Response) => {
+export const putProject = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const [updated] = await Project.update(req.body, { where: { id } });
