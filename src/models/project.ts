@@ -99,4 +99,8 @@ export class Project extends Model<
   //Has one Client
   @BelongsTo(() => Client)
   public client!: Client;
+
+  // Here we define the relationship between the project and the job positions
+  @HasMany(() => JobPosition)
+  public job_positions!: JobPosition[];
 }
