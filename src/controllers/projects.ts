@@ -24,25 +24,25 @@ export const getProjects = async (req: Request, res: Response) => {
   }
 };
 
-// In here we get a project by id and also we can include the job positions related to the project
 export const getProject = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params; // Obtiene el ID del proyecto desde los parámetros de la URL
+  const { includeJobPositions = "false" } = req.query; // Obtiene el parámetro de consulta
+
   try {
+    const inclusion = includeJobPositions === "true" ? [JobPosition] : [];
     const project = await Project.findByPk(id, {
-      include: [JobPosition],
+      include: inclusion, // Condiciona la inclusión de job_positions
     });
-    if (!project) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Project not found" });
+
+    if (project) {
+      res.json({ status: "success", message: "Project found", data: project });
+    } else {
+      res.status(404).json({ status: "error", message: "Project not found" });
     }
-    res.json({ status: "success", message: "Project found", data: project });
-  } catch (e) {
-    res.status(500).json({
-      status: "error",
-      message: "Error fetching the project",
-      error: e,
-    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Error fetching the project", error });
   }
 };
 
